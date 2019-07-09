@@ -6,8 +6,8 @@ import logging.config
 import yaml
 
 home = os.path.expanduser('~')
-logger_config = home + "vapors_config.yml"
-logger_debug_config = home + "vapors_config_debug.yml"
+logger_config = home + "/development/personal/git/nicotine/vapors_config.yml"
+logger_debug_config = home + "/development/personal/git/nicotine/vapors_config_debug.yml"
 
 def configure(default_path=logger_config, default_level=logging.DEBUG, env_key='LOG_CFG'):
     """Setup logging configuration"""

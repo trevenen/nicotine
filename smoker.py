@@ -34,9 +34,9 @@ def smoker():
     except Exception as e:
         vapor.vapors('argparsing exception occurred:', e)
 
-    if args.env not in ['dev', 'qa', 'prod']:
-        vapor.vapors('smoker must be in ' + \
-                     'dev, qa, prod. Exiting.')
+    if args.env not in ['dev', 'qa', 'ct', 'pr']:
+        vapor.vapors('smoker must be in '
+                     'dev, qa, ct, or, pr. Exiting.')
         sys.exit(-1)
 
     return args

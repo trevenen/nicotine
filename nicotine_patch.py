@@ -15,13 +15,14 @@ class NicotinePatch:
         executes these commands with intelligence
         and automated instance rollback
     """
-    def __init__(self, env, instance_id, service):
+    def __init__(self, env: str, instance_id: str,
+                 client: Doctor, instance: Doctor,
+                 service: str = 'ec2'):
         self.env = env
         self.instance_id = instance_id
+        self.client = client
+        self.instance = instance
         self.service = service
-        doc = Doctor(self, self.env, self.instance_id, self.service)
-        client = doc.create_client()
-        instance = doc.create_instance()
 
     def patch(self, patch_command='sudo yum update -y'):
         """
@@ -32,7 +33,7 @@ class NicotinePatch:
         """
         self.patch_command = patch_command
         try:
-            response = client.send_command(
+            response = self.client.send_command(
                 InstanceIds=[self.instance_id],
                 DocumentName="sudo_yum_update",
                 Parameters={'commands':[self.patch_command]},)
@@ -41,22 +42,22 @@ class NicotinePatch:
             # before checking command id
             time.sleep(60)
             self.command_id = response['Command']['CommandId']
-            vapor.vapors(f'patch command {self.patch_command} with' + \
-                         f'command id {self.command_id} for instance ' + \
-                         f'{self.instance_id} in env {self.env} ' + \
-                         'executed. response below:\n' + \
+            vapor.vapors(f'patch command {self.patch_command} with'
+                         f'command id {self.command_id} for instance '
+                         f'{self.instance_id} in env {self.env} '
+                         'executed. response below:\n'
                          f'{response}')
             vapor.vapors(f'\n{self.patch_command}')
         except Exception as e:
-            vapor.vapors('an exception was thrown during patch attempt' + \
-                         f'for command: {self.patch_command} with command id' + \
-                         f'{self.command_id} for instance ' + \
-                         f'{self.instance_id} in env {self.env}. ' + \
-                         'exiting; response below:\n' + \
+            vapor.vapors('an exception was thrown during patch attempt'
+                         f'for command: {self.patch_command} with command id'
+                         f'{self.command_id} for instance '
+                         f'{self.instance_id} in env {self.env}. '
+                         'exiting; response below:\n'
                          f'{response}', e)
             raise
 
-    def allergy_test(self, self.cmd_id):
+    def allergy_test(self, cmd_id):
         """
             test if the patch has completed
             in 10 minutes or less. if so: reboot, else:
@@ -65,24 +66,24 @@ class NicotinePatch:
 
         try:
             for idx, val in enumerate(range(11)):
-                response = client.get_command_invocation(
+                response = self.client.get_command_invocation(
                     InstanceId=self.instance_id,
                     CommandId=self.cmd_id)
 
                 if response['Status'] == 'Success':
-                    vapor.vapors(f'patch command {self.patch_command} with command id ' + \
-                                 f'{self.cmd_id} for instance ' + \
-                                 f'{self.instance_id} in env {self.env} ' + \
+                    vapor.vapors(f'patch command {self.patch_command} with command id '
+                                 f'{self.cmd_id} for instance '
+                                 f'{self.instance_id} in env {self.env} '
                                  'succeeded. response below:\n'
-                                 f'{repsonse})
+                                 f'{repsonse}')
                     return 0
                 elif response['Status'] in ['Delayed', 'InProgress', 'Pending']:
                     if val == 10:
-                        vapor.vapors(f'{self.patch_command} with command id' + \
-                                     f'{self.cmd_id} for instance ' + \
-                                     f'{self.instance_id} in env {self.env} ' + \
-                                     f'has taken 10 minutes to attempt ' + \
-                                     f'command execution. rolling back. ' + \
+                        vapor.vapors(f'{self.patch_command} with command id'
+                                     f'{self.cmd_id} for instance '
+                                     f'{self.instance_id} in env {self.env} '
+                                     f'has taken 10 minutes to attempt '
+                                     f'command execution. rolling back. '
                                      'failed response below:\n'
                                      f'{response}')
                         # launch epinephrine box from prep epinephrine ami
@@ -92,14 +93,15 @@ class NicotinePatch:
                         # system test new box
                         sys.exit(-1)
                     else:
-                        vapor.vapors(f'patch command {self.patch_command} with command id ' + \
-                                     f'{self.cmd_id} for instance ' + \
-                                     f'{self.instance_id} in env {self.env} has a status of ' + \
-                                     f'{response['Status']}. sleeping for 60 seconds ' + \
+                        vapor.vapors(f'patch command {self.patch_command} with command id '
+                                     f'{self.cmd_id} for instance '
+                                     f'{self.instance_id} in env {self.env} has a status of '
+                                     f"{response['Status']}. sleeping for 60 seconds "
                                       'and then checking status again.')
                         time.sleep(60)
+                        continue
 
-    def anaphylaxis_check(self, name, reboot_command='sudo shutdown -r now', status_code: int):
+    def anaphylaxis_check(self, name: str, status_code: int, reboot_command='sudo shutdown -r now'):
         self.name = name
         self.reboot_command = reboot_command
         self.status_code = status_code
@@ -108,38 +110,38 @@ class NicotinePatch:
         # is zero
         if self.status_code == 0:
             try:
-                response = client.send_command(
+                response = self.client.send_command(
                     InstanceIds=[self.instance_id],
                     DocumentName="sudo_shutdown_now_r",
                     Parameters={'commands':[self.reboot_command]},)
 
-                    vapor.vapors(f'reboot of {self.name} attempted. ' + \
+                    vapor.vapors(f'reboot of {self.name} attempted. '
                                  'response below:\n{response}')
             except as Exception e:
-                    vapor.vapors('something went wrong when trying to ' + \
+                    vapor.vapors('something went wrong when trying to '
                                  f'reboot {self.name}. exception below:\n', e)
                     raise
         else:
-            vapor.vapors('anaphylaxis_check method received a status_code ' + \
-                         'of {self.status_code} and cannot continue. response is ' + \
+            vapor.vapors('anaphylaxis_check method received a status_code '
+                         'of {self.status_code} and cannot continue. response is '
                          'below. exiting.')
                     sys.exit(-1)
 
         # nice case for recursion
         for idx,val in enumerate(range(11)):
             # {'Code': 16, 'Name': 'running'}
-            if instance.state == 16:
-                vapor.vapors(f'reboot of {self.name} successful. system ' + \
+            if self.instance.state == 16:
+                vapor.vapors(f'reboot of {self.name} successful. system '
                              'testing will now proceed.')
                 break
             # {'Code': 0, 'Name': 'pending'}
-            elif instance.state == 0:
+            elif self.instance.state == 0:
                 if val == 10:
-                    vapor.vapors(f'reboot of {self.name} has taken ' + \
+                    vapor.vapors(f'reboot of {self.name} has taken '
                                  '10 minutes. exiting.')
                     sys.exit(-1)
             else:
-                vapor.vapors(f'reboot attempt of {self.name}' + \
-                             f'has status code of {instance.state}.' + \
+                vapor.vapors(f'reboot attempt of {self.name}'
+                             f'has status code of {self.instance.state}.'
                              f'exiting.')
                 sys.exit(-1)

@@ -28,7 +28,7 @@ response = client.run_instances(ImageId=image_id,
                         'AssociatePublicIpAddress': associate_public_ip_address,
                         'DeviceIndex': 0,
                         'Groups': [''],
-                        'SubnetId': '-41c35e6b'
+                        'SubnetId': ''
                         }],
                         InstanceType=instance_type,
                         MaxCount=max_count,

@@ -7,7 +7,7 @@ class Doctor:
         smokers get on the patch
     """
 
-    def __init__(self, env: str, instance_id: str, service: str):
+    def __init__(self, env: str, instance_id: str, service: str = 'ec2'):
         self.env = env
         self.instance_id = instance_id
         self.service = service

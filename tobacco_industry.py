@@ -3,7 +3,7 @@ import boto3
 import pprint
 import sys
 
-parser = argparse.ArgumentParser(description='smoker: launch a box, cancer: kill a box')
+parser = argparse.ArgumentParser(description='create_smoker(): launch a box, give_cancer(): kill a box')
 
 # for future features
 parser.add_argument('-c',
@@ -37,13 +37,13 @@ if not args.client:
     args.client = 'ec2'
 
 def profile() -> str:
-    for env in ['-dev-', '-qa-', '-prod-']:
+    for env in ['-dev-', '-qa-', '-ct', '-pr-']:
         if env in args.smoker_name:
             profile = env.split('-')[1]
             return profile
-    raise ProfileNotFound('smoker name\n' + \
-                          'instance short name\n' + \
-                          'did not contain an\n' + \
+    raise ProfileNotFound('smoker name\n'
+                          'instance short name\n'
+                          'did not contain an\n'
                           'environment short name.')
 
 session = boto3.session.Session(profile_name=profile())
@@ -59,13 +59,13 @@ client = session.client(args.client)
 #if args.instance_id:
 #    resource_instance = resource.Instance(args.instance_id)
 
-def smoker(image_id='ami-**********',
+def create_smoker(image_id='',
            instance_type='t2.micro',
            min_count=1,
            max_count=1,
            associate_public_ip_address=False,
            tag_specification=[],
-           iam_instance_profile={'Name': 'some_role'},
+           iam_instance_profile={'Name': 'some profile'},
            dry_run=False
            ) -> dict:
 
@@ -81,23 +81,23 @@ def smoker(image_id='ami-**********',
                             },
                             {
                                  'Key': 'ID',
-                                 'Value': 'INT'
+                                 'Value': '144'
                             },
                             {
-                                 'Key': 'ApplicationName',
-                                 'Value': 'NAME'
+                                 'Key': 'AppName',
+                                 'Value': 'Some App'
                             },
                             {
                                  'Key': 'Name',
                                  'Value': args.smoker_name
                             },
                             {
-                                 'Key': 'ProductOwnerEmail',
-                                 'Value': 'you@domain.com'
+                                 'Key': 'Email',
+                                 'Value': 'jsteinberg@mmm.com'
                             },
                             {
-                                'Key': 'AlternateEmail',
-                                 'Value': 'other@domain.com'
+                                'Key': 'AltEmail',
+                                 'Value': 'jsteinberg@mmm.com'
                             }
                         ]
                     }
@@ -120,14 +120,14 @@ def smoker(image_id='ami-**********',
 
     pprint.pprint(response)
 
-def cancer(instance_ids=[args.instance_id], dry_run=args.dry_run) -> dict:
+def give_cancer(instance_ids=[args.instance_id], dry_run=args.dry_run) -> dict:
 
     response = client.terminate_instances(InstanceIds=instance_ids, DryRun=dry_run)
 
 # live or die
 if args.smoker_name and args.instance_id:
-    cancer()
+    give_cancer()
 elif args.smoker_name:
-    smoker()
+    create_smoker()
 else:
-    print('either smokes or has cancer: not both nor neither')
+    print('homie either smokes or has cancer: not both nor neither')

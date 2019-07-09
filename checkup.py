@@ -11,23 +11,25 @@ class Checkup:
         system tests for any stack
         you like.
     """
-    def __init__(self, env, instance_id, service):
+    def __init__(self, env: str, instance_id: str,
+                 service: str, client: Doctor):
         self.env = env
         self.instance_id = instance_id
         self.service = service
-        doc = Doctor(self, self.env, self.instance_id, self.service)
-        client = doc.create_client()
-        instance = doc.create_instance()
+        self.client = client
 
-    def checkup(self, command=''):
+    def checkup(self, command='sudo /etc/init.d/tomcat8 status'):
         """
             Check takes a command, attempts
             it and fails if it doesn't
             have a 'Success' status in time.
+            Nicotine defaults to testing tomcat
+            because we have historically been a
+            java shop.
         """
         self.command = command
         try:
-            response = client.send_command(
+            response = self.client.send_command(
                 InstanceIds=[self.instance_id],
                 DocumentName=self.command,
                 Parameters={'commands':[self.command]},)
@@ -36,18 +38,18 @@ class Checkup:
             # before checking command id
             time.sleep(60)
             self.command_id = response['Command']['CommandId']
-            vapor.vapors(f'command {self.command} with' + \
-                         f'command id {self.command_id} for instance ' + \
-                         f'{self.instance_id} in env {self.env} ' + \
-                         'executed. response below:\n' + \
+            vapor.vapors(f'command {self.command} with'
+                         f'command id {self.command_id} for instance '
+                         f'{self.instance_id} in env {self.env} '
+                         'executed. response below:\n'
                          f'{response}')
             return self.command_id
         except Exception as e:
-            vapor.vapors('an exception was thrown during patch attempt' + \
-                         f'for command: {self.command} with command id' + \
-                         f'{self.command_id} for instance ' + \
-                         f'{self.instance_id} in env {self.env}. ' + \
-                         'exiting; response below:\n' + \
+            vapor.vapors('an exception was thrown during patch attempt'
+                         f'for command: {self.command} with command id'
+                         f'{self.command_id} for instance '
+                         f'{self.instance_id} in env {self.env}. '
+                         'exiting; response below:\n'
                          f'{response}', e)
             raise
 
@@ -60,23 +62,23 @@ class Checkup:
 
         try:
             for idx, val in enumerate(range(3)):
-                response = client.get_command_invocation(
+                response = self.client.get_command_invocation(
                     InstanceId=self.instance_id,
                     CommandId=self.cmd_id)
 
                 if response['Status'] == 'Success':
-                    vapor.vapors(f'command {self.command} with command id ' + \
-                                 f'{self.cmd_id} for instance ' + \
-                                 f'{self.instance_id} in env {self.env} ' + \
+                    vapor.vapors(f'command {self.command} with command id '
+                                 f'{self.cmd_id} for instance '
+                                 f'{self.instance_id} in env {self.env} '
                                  'succeeded. smoke_free!!! (creating jira ticket)')
                     return 0
                 elif response['Status'] in ['Delayed', 'InProgress', 'Pending']:
                     if val == 2:
-                        vapor.vapors(f'{self.command} with command id' + \
-                                     f'{self.cmd_id} for instance ' + \
-                                     f'{self.instance_id} in env {self.env} ' + \
-                                     f'has taken 2 minutes to attempt ' + \
-                                     f'command execution. rolling back. ' + \
+                        vapor.vapors(f'{self.command} with command id'
+                                     f'{self.cmd_id} for instance '
+                                     f'{self.instance_id} in env {self.env} '
+                                     f'has taken 2 minutes to attempt '
+                                     f'command execution. rolling back. '
                                      'failed response below:\n'
                                      f'{response}')
                         # launch epinephrine box from prep epinephrine ami
@@ -86,9 +88,9 @@ class Checkup:
                         # system test new box
                         sys.exit(-1)
                     else:
-                        vapor.vapors(f'command {self.command} with command id ' + \
-                                     f'{self.cmd_id} for instance ' + \
-                                     f'{self.instance_id} in env {self.env} has a status of ' + \
-                                     f'{response['Status']}. sleeping for 60 seconds ' + \
+                        vapor.vapors(f'command {self.command} with command id '
+                                     f'{self.cmd_id} for instance '
+                                     f'{self.instance_id} in env {self.env} has a status of '
+                                     f'{response['Status']}. sleeping for 60 seconds '
                                       'and then checking status again.')
                         time.sleep(60)

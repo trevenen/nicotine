@@ -10,11 +10,11 @@ formatters:
     format: "%(asctime)s|%(levelname)s|%(pathname)s:%(funcName)s:%(lineno)-2s|%(message)s"
 
 handlers:
-  console:
-    class: logging.StreamHandler
-    level: DEBUG
-    formatter: simple
-    stream: ext://sys.stdout
+  #console:
+  #  class: logging.StreamHandler
+  #  level: DEBUG
+  #  formatter: simple
+  #  stream: ext://sys.stderr
 
   screen:
     class: logging.StreamHandler
@@ -64,4 +64,5 @@ loggers:
 
 root:
   level: NOTSET
-  handlers: [console, logfile_debug]
+  #handlers: [console, logfile_debug]
+  handlers: [logfile_debug]

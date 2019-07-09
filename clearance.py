@@ -10,9 +10,9 @@ from pathlib import Path
 
 class Clearance:
 
-    def __init__(self, creds, tool):
+    def __init__(self, creds, fed):
         self.creds = creds
-        self.tool = tool
+        self.fed = fed
 
     def check_botocore(self):
         try:
@@ -37,36 +37,36 @@ class Clearance:
         if Path.exists(creds_path):
             vapor.vapors('aws credentials file exists at given location. checking version.')
         else:
-            vapor.vapors('cannot find aws credentials file at specified location. ' + \
-                         'quick start for credentials setup: ' + \
-                         f'{aws_link}\n' + \
+            vapor.vapors('cannot find aws credentials file at specified location. '
+                         'quick start for credentials setup: '
+                         f'{aws_link}\n'
                          'exiting.')
             sys.exit(-1)
 
-    def check_tool(self):
-        tool_link = 'need tool link'
-        tool_path = Path(self.tool)
-        if Path.exists(tool_path):
-            vapor.vapors('tool binary exists at given location. checking version.')
+    def check_fed(self):
+        fed_link = 'need fed link'
+        fed_path = Path(self.fed)
+        if Path.exists(fed_path):
+            vapor.vapors('fed binary exists at given location. checking version.')
         else:
-            vapor.vapors('cannot find tool binary specified location. ' + \
-                         'quick start for tool setup: ' + \
-                         f'{tool_link}\n' + \
+            vapor.vapors('cannot find fed binary specified location. '
+                         'quick start for fed setup: '
+                         f'{fed_link}\n'
                          'exiting.')
             sys.exit(-1)
 
-    def check_tool_version(self):
-        tool_link = 'need tool link'
-        tool_version = '0.0.6'
-        tool_version_stdout = subprocess.run([self.tool, '--version'], stdout=subprocess.PIPE).stdout.decode('utf-8')
-        current_tool_version = tool_version_stdout[12:17]
+    def check_fed_version(self):
+        fed_link = 'need fed link'
+        fed_version = '0.0.6'
+        fed_version_stdout = subprocess.run([self.fed, '--version'], stdout=subprocess.PIPE).stdout.decode('utf-8')
+        current_fed_version = fed_version_stdout[12:17]
 
-        if version.parse(current_tool_version) >= version.parse(tool_version):
-            vapor.vapors(f'tool binary version is {current_tool_version} which works. continuing.')
+        if version.parse(current_fed_version) >= version.parse(fed_version):
+            vapor.vapors(f'fed binary version is {current_fed_version} which works. continuing.')
         else:
-            vapor.vapors(f'current tool version is {current_tool_version} ' + \
-                           f'which is too old. tool version must be at least {tool_version} ' + \
-                           f'quick start for upgrading tool below: ' + \
-                           f'{tool_link}\n' + \
+            vapor.vapors(f'current fed version is {current_fed_version} '
+                           f'which is too old. fed version must be at least {fed_version} '
+                           f'quick start for upgrading fed below: '
+                           f'{fed_link}\n'
                            'exiting.')
             sys.exit(-1)

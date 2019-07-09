@@ -7,9 +7,9 @@ from jira import JIRA
 class SmokeFree:
     def __init__(self, jira_url='https://jira.domain.com/', username, password, project=''
                  summary='nicotine patch applied',
-                 description='automated nicotine patch' + \
+                 description='automated nicotine patch'
                  'testing', issuetype={'name': 'Task'},
-                 customfield_SOMEINT={"value": 'something'}):
+                 customfield_SOMEINT={"value": 'Some Value'}):
         self.jira_url = jira_url
         self.username = username
         self.password = password

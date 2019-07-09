@@ -4,7 +4,7 @@ import vapor_modes
 
 from typing import Optional
 
-vapor_modes.configure_debug()
+vapor_modes.configure()
 logger = logging.getLogger(__name__)
 
 def vapors(smoke: str, choke: Optional[Exception] = None):

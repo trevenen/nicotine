@@ -1,12 +1,13 @@
 import boto3
 import datetime
 import vapor
+import time
 
-from doctors import Doctor
+from doctor import Doctor
 
 class PrepEpinephrine:
     """
-        In rare cases an extreme
+        In rare cases (*cough: legacy yum servers) an extreme
         allergic reaction to a nicotine patch occurs and
         server anaphylaxis can occur in the form of kernel
         panics or dependency conflicts (blame app dev
@@ -18,7 +19,8 @@ class PrepEpinephrine:
         validation of such an AMI.
     """
 
-    def __init__(self, env: str instance_id: str, service: str):
+    def __init__(self, env: str, instance_id: str,
+                 client: Doctor, service: str = 'ec2'):
         """
             To prep epinephrine we need to know
             the environment of the smoker,
@@ -28,9 +30,7 @@ class PrepEpinephrine:
         self.env = env
         self.instance_id = instance_id
         self.service = service
-        self.doc = Doctor(self.env, self.instance_id, self.service)
-        self.client = doc.create_client()
-        self.instance = doc.create_instance()
+        self.client = client
 
     def create_ami_timestamp(self):
         """
@@ -41,10 +41,10 @@ class PrepEpinephrine:
         """
         try:
             self.ami_timestamp = datetime.datetime.utcnow().strftime('%Y%m%d-%s')
-            vapors(f"ami_timestamp is: {self.ami_timestamp}")
+            vapor.vapors(f"ami_timestamp is: {self.ami_timestamp}")
             return self.ami_timestamp
         except Exception as e:
-            vapors('something went wrong with datetime:\n', e)
+            vapor.vapors('something went wrong with datetime:\n', e)
             raise
 
     def get_tags(self):
@@ -59,13 +59,13 @@ class PrepEpinephrine:
                             ],
                         )
             self.tags = response['Tags']
-            vapors(f"describe_tags response: {response}")
+            vapor.vapors(f"describe_tags response: {response}")
             return self.tags
         except Exception as e:
-            vapors('describe_tags error:\n', e)
+            vapor.vapors('describe_tags error:\n', e)
             raise
 
-    def check_name(self, tg: dict):
+    def check_name(self, tg: list):
         """
             We have to be certain
             who this person is.  Can't
@@ -75,12 +75,14 @@ class PrepEpinephrine:
         self.tg = tg
 
         try:
-            self.name = [self.tg.get('Value') for tag in self.tg if tag.get('Key') == 'Name']
-            self.smoker_name = name[0]
-            vapors(f'smoker name is: {self.smoker_name}')
+            # does not handle
+            # two 'Names'
+            self.name = [tag['Value'] for tag in self.tg if tag.get('Key') == 'Name']
+            self.smoker_name = self.name[0]
+            vapor.vapors(f'smoker name is: {self.smoker_name}')
             return self.smoker_name
         except IndexError as e:
-            vapors(f'smoker with instance_id {self.instance_id} ' + \
+            vapor.vapors(f'smoker with instance_id {self.instance_id} '
                    'has no name which is strange. exiting', e)
             raise
 
@@ -92,10 +94,10 @@ class PrepEpinephrine:
         self.tm_stamp = tm_stamp
         try:
             self.ami_nm = f'nicotine_patch_{self.nm}_{self.tm_stamp}'
-            vapor(f'ami name: {self.ami_nm}')
+            vapor.vapors(f'ami name: {self.ami_nm}')
             return self.ami_nm
         except Exception as e:
-            vapors('something went wrong ' + \
+            vapor.vapors('something went wrong '
                    f'when creating the ami name {self.ami_name}.\n', e)
             raise
 
@@ -114,13 +116,13 @@ class PrepEpinephrine:
                 NoReboot=True)
 
             self.ami_id= response['ImageId']
-            vapors(f'ami {self.nm} has ami id ' + \
-                   f'{self.ami_id}. ami creation attempt ' + \
-                   f'is below:\n' + \
-                   f'{self.nmresponse}')
+            vapor.vapors(f'ami {self.nm} has ami id '
+                   f'{self.ami_id}. ami creation attempt '
+                   f'is below:\n'
+                   f'{response}')
             return self.ami_id
         except Exception as e:
-            vapors('something went wrong ' + \
+            vapor.vapors('something went wrong '
                    f'when creating ami {self.nm}:\n', e)
             raise
 
@@ -132,22 +134,23 @@ class PrepEpinephrine:
         """
         self.ami_nm = ami_nm
         self.ami_id = ami_id
-        for idx, val in enumerate(range(49)):
+        for idx, val in enumerate(range(122)):
             self.ami_state = self.client.describe_images(ImageIds=[self.ami_id])['Images'][0]['State']
             if self.ami_state == 'available':
-                vapor.vapors(f'ami {self.ami_nm} with ami id {self.ami_id} ' + \
+                vapor.vapors(f'ami {self.ami_nm} with ami id {self.ami_id} '
                              'is available for epinephrine.')
                 break
             elif self.ami_state == 'pending':
-                if val == 48:
-                    vapor.vapors(f'ami {self.ami_nm} with ami id {self.ami_id} ' + \
-                                 'unable to form in 4 hours. If you think this ami' + \
-                                 'could just take that long then maybe investigate. ' + \
+                if val == 121:
+                    vapor.vapors(f'ami {self.ami_nm} with ami id {self.ami_id} '
+                                 'unable to form in 4 hours. If you think this ami'
+                                 'could just take that long then maybe investigate. '
                                  'exiting.')
                     sys.exit(-1)
                 else:
-                    vapor.vapors(f'ami {self.ami_nm} with ami id {self.ami_id} still forming. sleeping 5 minutes.')
-                    time.sleep(300)
+                    vapor.vapors(f'ami {self.ami_nm} with ami id {self.ami_id} still forming. sleeping 2 minutes.')
+                    time.sleep(120)
+                    continue
             else:
                 vapor.vapors(f'ami state is {self.ami_state}. exiting')
                 sys.exit(-1)

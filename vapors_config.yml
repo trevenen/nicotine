@@ -55,4 +55,5 @@ loggers:
 
 root:
   level: NOTSET
-  handlers: [console, logfile]
+  #handlers: [console, logfile]
+  handlers: [logfile]
